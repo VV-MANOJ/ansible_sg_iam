@@ -1,0 +1,25 @@
+name: Run Ansible Playbook
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ansible:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'  # Replace 'x' with the desired Python version
+
+      - name: Install Ansible
+        run: |
+          pip install ansible
+
+      - name: Run Ansible playbook
+        run: |
+          ansible-playbook -i inventory sg_iam.yml 
