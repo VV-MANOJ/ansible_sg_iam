@@ -1,0 +1,60 @@
+---
+- name: Create IAM Role and S3 Bucket
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    iam_role_name: my-iam-role
+    s3_bucket_name: my-s3-bucket
+
+  tasks:
+    - name: Create IAM Role
+      iam_role:
+        name: "{{ iam_role_name }}"
+        state: present
+        policy_document: |
+          {
+            "Version": "2012-10-17",
+            "Statement": [
+              {
+                "Effect": "Allow",
+                "Action": "s3:*",
+                "Resource": [
+                  "arn:aws:s3:::{{ s3_bucket_name }}",
+                  "arn:aws:s3:::{{ s3_bucket_name }}/*"
+                ]
+              }
+            ]
+          }
+      register: iam_role_result
+
+---
+- name: Create Security Group
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    security_group_name: my-security-group
+    security_group_description: My Security Group
+    security_group_vpc_id: vpc-12345678
+    ingress_rules:
+      - protocol: tcp
+        port_range: 22
+        cidr_ip: 0.0.0.0/0
+      - protocol: tcp
+        port_range: 80
+        cidr_ip: 0.0.0.0/0
+
+  tasks:
+    - name: Create Security Group
+      ec2_group:
+        name: "{{ security_group_name }}"
+        description: "{{ security_group_description }}"
+        vpc_id: "{{ security_group_vpc_id }}"
+        rules:
+          - proto: "{{ item.protocol }}"
+            from_port: "{{ item.port_range }}"
+            to_port: "{{ item.port_range }}"
+            cidr_ip: "{{ item.cidr_ip }}"
+        state: present
+      with_items: "{{ ingress_rules }}"
